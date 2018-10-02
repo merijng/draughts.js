@@ -123,7 +123,7 @@ var Draughts = function (fen) {
     load(DEFAULT_FEN)
   }
 
-  function load (fen) {
+  function load (fen, validate = true) {
     // TODO for default fen
     if (!fen || fen === DEFAULT_FEN) {
       position = DEFAULT_POSITION_INTERNAL
@@ -132,10 +132,13 @@ var Draughts = function (fen) {
     }
     // fen_constants(dimension) //TODO for empty fens
 
-    var checkedFen = validate_fen(fen)
-    if (!checkedFen.valid) {
-      console.error('Fen Error', fen, checkedFen)
-      return false
+    if(validate)
+    {
+      var checkedFen = validate_fen(fen)
+      if (!checkedFen.valid) {
+        console.error('Fen Error', fen, checkedFen)
+        return false
+      }
     }
 
     clear()
@@ -733,7 +736,7 @@ var Draughts = function (fen) {
 
           matchArray = str.match(/^[BW]0+/) // e.g. B000, W0
           if (matchArray !== null) {
-            for (var i = 1; i < matchArray[0].length; i++) {
+            for (var i = 0; i < matchArray[0].length; i++) {
               posTo = posFrom + (i * STEPS[dir])
               moveObject = {from: posFrom, to: posTo, takes: [], jumps: []}
               moves.push(moveObject)
@@ -871,25 +874,22 @@ var Draughts = function (fen) {
       return null
     }
 
-    var move = old.move
+    var oldMove = old.move;
     turn = old.turn
     moveNumber = old.moveNumber
 
-    position = setCharAt(position, convertNumber(move.from, 'internal'), move.piece)
-    position = setCharAt(position, convertNumber(move.to, 'internal'), 0)
-    if (move.flags === 'c') {
-      for (var i = 0; i < move.captures.length; i += 1) {
-        position = setCharAt(position, convertNumber(move.captures[i], 'internal'), move.piecesCaptured[i])
+    position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece)
+    position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0)
+    if (oldMove.flags === 'c' || oldMove.flags === 'p') {
+      for (var i = 0; i < oldMove.takes.length; i++) {
+        position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesCaptured[i])
       }
-    } else if (move.flags === 'p') {
-      if (move.captures) {
-        for (var i = 0; i < move.captures.length; i += 1) {
-          position = setCharAt(position, convertNumber(move.captures[i], 'internal'), move.piecesCaptured[i])
-        }
-      }
-      position = setCharAt(position, convertNumber(move.from, 'internal'), move.piece.toLowerCase())
     }
-    return move
+    if (oldMove.flags === 'p') {
+      position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece.toLowerCase())
+    }
+    
+    return oldMove
   }
 
   function get_disambiguator (move) {
@@ -1157,8 +1157,8 @@ var Draughts = function (fen) {
     FLAGS: FLAGS,
     SQUARES: 'A8',
 
-    load: function (fen) {
-      return load(fen)
+    load: function (fen, validate = true) {
+      return load(fen, validate)
     },
 
     reset: function () {
