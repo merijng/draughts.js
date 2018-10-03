@@ -575,9 +575,10 @@ var Draughts = function (fen) {
       move.flags = FLAGS.CAPTURE
       move.captures = move.takes
       move.piecesCaptured = move.piecesTaken
-      for (var i = 0; i < move.takes.length; i++) {
+
+      var i = move.takes.length;
+      while(i--)
         position = setCharAt(position, convertNumber(move.takes[i], 'internal'), 0)
-      }
     }
     // Promoting piece here
     if (move.to <= 5 && move.piece === 'w') {
@@ -652,11 +653,14 @@ var Draughts = function (fen) {
       var tempCaptures = getCaptures()
       // TODO change to be applicable to array
       if (tempCaptures.length) {
-        for (var i = 0; i < tempCaptures.length; i++) {
+        var i = tempCaptures.length;
+        while(i--)
+        {
           tempCaptures[i].flags = FLAGS.CAPTURE
           tempCaptures[i].captures = tempCaptures[i].jumps
           tempCaptures[i].piecesCaptured = tempCaptures[i].piecesTaken
         }
+
         return tempCaptures
       }
       moves = getMoves()
@@ -686,10 +690,9 @@ var Draughts = function (fen) {
 
   function getMoves (index) {
     var moves = []
-    var us = turn
 
     for (var i = 1; i < position.length; i++) {
-      if (position[i] === us || position[i] === us.toLowerCase()) {
+      if (position[i] === turn || position[i] === turn.toLowerCase()) {
         var tempMoves = movesAtSquare(i)
         if (tempMoves.length) {
           moves = moves.concat(convertMoves(tempMoves, 'external'))
@@ -712,7 +715,7 @@ var Draughts = function (fen) {
     var moves = []
     var posFrom = square
     var piece = position.charAt(posFrom)
-    // console.trace(piece, square, 'movesAtSquare')
+
     switch (piece) {
       case 'b':
       case 'w':
@@ -753,7 +756,9 @@ var Draughts = function (fen) {
   function getCaptures () {
     var us = turn
     var captures = []
-    for (var i = 0; i < position.length; i++) {
+    var i = position.length;
+    while(i--)
+    {
       if (position[i] === us || position[i] === us.toLowerCase()) {
         var posFrom = i
         var state = {position: position, dirFrom: ''}
@@ -765,6 +770,7 @@ var Draughts = function (fen) {
         }
       }
     }
+
     captures = longestCapture(captures)
     return captures
   }
@@ -781,7 +787,7 @@ var Draughts = function (fen) {
       dirString = directionStrings(state.position, posFrom)
     }
     var finished = true
-    var captureArrayForDir = {}
+    var captureArrayForDir = []
     for (var dir in dirString) {
       if (dir === state.dirFrom) {
         continue
@@ -869,6 +875,7 @@ var Draughts = function (fen) {
   }
 
   function undoMove () {
+
     var old = history.pop()
     if (!old) {
       return null
@@ -881,7 +888,9 @@ var Draughts = function (fen) {
     position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece)
     position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0)
     if (oldMove.flags === 'c' || oldMove.flags === 'p') {
-      for (var i = 0; i < oldMove.takes.length; i++) {
+      var i = oldMove.takes.length;
+      while(i--)
+      {
         position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesCaptured[i])
       }
     }
@@ -901,50 +910,50 @@ var Draughts = function (fen) {
   }
 
   function isInteger (int) {
-    var regex = /^\d+$/
-    if (regex.test(int)) {
-      return true
-    } else {
-      return false
-    }
+    var regex = /^\d+$/;
+    return regex.test(int);
   }
 
   function longestCapture (captures) {
     var maxJumpCount = 0
-    for (var i = 0; i < captures.length; i++) {
-      var jumpCount = captures[i].jumps.length
-      if (jumpCount > maxJumpCount) {
-        maxJumpCount = jumpCount
-      }
+    var i = captures.length;
+    while(i--)
+    {
+      if (captures[i].jumps.length > maxJumpCount)
+        maxJumpCount = captures[i].jumps.length
     }
 
-    var selectedCaptures = []
-    if (maxJumpCount < 2) {
-      return selectedCaptures
-    }
+    if (maxJumpCount < 2)
+      return [];
 
-    for (i = 0; i < captures.length; i++) {
-      if (captures[i].jumps.length === maxJumpCount) {
+    var selectedCaptures = [];
+    i = captures.length;
+    while(i--)
+    {
+      if (captures[i].jumps.length === maxJumpCount)
         selectedCaptures.push(captures[i])
-      }
     }
+
     return selectedCaptures
   }
 
   function convertMoves (moves, type) {
+    if (!type || moves.length === 0)
+      return []
+
     var tempMoves = []
-    if (!type || moves.length === 0) {
-      return tempMoves
-    }
+
     for (var i = 0; i < moves.length; i++) {
       var moveObject = {jumps: [], takes: []}
       moveObject.from = convertNumber(moves[i].from, type)
-      for (var j = 0; j < moves[i].jumps.length; j++) {
+      var j = moves[i].jumps.length;
+      while(j--)
         moveObject.jumps[j] = convertNumber(moves[i].jumps[j], type)
-      }
-      for (j = 0; j < moves[i].takes.length; j++) {
+
+      j = moves[i].takes.length;
+      while(j--)
         moveObject.takes[j] = convertNumber(moves[i].takes[j], type)
-      }
+
       moveObject.to = convertNumber(moves[i].to, type)
       moveObject.piecesTaken = moves[i].piecesTaken
       tempMoves.push(moveObject)
@@ -957,10 +966,10 @@ var Draughts = function (fen) {
     var result
     switch (notation) {
       case 'internal':
-        result = num + Math.floor((num - 1) / 10)
+        result = num + ~~((num - 1) / 10)
         break
       case 'external':
-        result = num - Math.floor((num - 1) / 11)
+        result = num - ~~((num - 1) / 11)
         break
       default:
         result = num
@@ -1121,16 +1130,35 @@ var Draughts = function (fen) {
     return move
   }
 
+  // TODO: this function copies an object.
+  // it is faster then JSON.parse(JSON.stringify(obj))
+  // In ES6 there is even a better way. Change it please!
   function clone (obj) {
-    var dupe = JSON.parse(JSON.stringify(obj))
-    return dupe
+    var c, i;
+  
+    if (typeof obj !== 'object' || !obj)
+      return obj;
+  
+    if ('[object Array]' === Object.prototype.toString.apply(obj)) {
+      c = [];
+      var len = obj.length;
+      for (i = 0; i < len; i++)
+        c[i] = clone(obj[i]);
+      return c;
+    }
+  
+    c = {};
+    for (i in obj)
+      if (obj.hasOwnProperty(i))
+        c[i] = clone(obj[i]);
+    return c;
   }
 
   function trim (str) {
     return str.replace(/^\s+|\s+$/g, '')
   }
 
-  // TODO
+  // TODO: Finish function
   function perft (depth) {
     var moves = generate_moves({legal: false})
     var nodes = 0
@@ -1200,12 +1228,16 @@ var Draughts = function (fen) {
       move.to = parseInt(move.to, 10)
       move.from = parseInt(move.from, 10)
       var moves = generate_moves()
-      for (var i = 0; i < moves.length; i++) {
+
+      var i = moves.length;
+      while(i--)
+      {
         if ((move.to === moves[i].to) && (move.from === moves[i].from)) {
           makeMove(moves[i])
           return moves[i]
         }
       }
+
       return false
     },
 
