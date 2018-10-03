@@ -1187,14 +1187,15 @@ var Draughts = function (fen) {
     },
 
     move: function move (move, validateMove = true) {
-      if (typeof move.to === 'undefined' && typeof move.from === 'undefined') {
-        return false
-      }
-      move.to = parseInt(move.to, 10)
-      move.from = parseInt(move.from, 10)
-
       if(validateMove)
       {
+        if (typeof move.to === 'undefined' && typeof move.from === 'undefined') {
+          return false
+        }
+
+        move.to = parseInt(move.to, 10)
+        move.from = parseInt(move.from, 10)
+
         var moves = generate_moves()
         var i = moves.length;
         while(i--)
