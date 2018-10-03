@@ -98,7 +98,6 @@ var Draughts = function (fen) {
   }
 
   var turn = WHITE
-  var moveNumber = 1
   var history = []
   var header = {}
 
@@ -113,7 +112,6 @@ var Draughts = function (fen) {
   function clear () {
     position = DEFAULT_POSITION_INTERNAL
     turn = WHITE
-    moveNumber = 1
     history = []
     header = {}
     update_setup(generate_fen())
@@ -353,12 +351,11 @@ var Draughts = function (fen) {
 
     var moves = []
     var moveString = ''
-    var moveNumber = 1
 
     while (tempHistory.length > 0) {
       var move = tempHistory.shift()
       if (move.turn === 'W') {
-        moveString += moveNumber + '. '
+        moveString += 0 + '. '
       }
       moveString += move.move.from
       if (move.move.flags === 'c') {
@@ -368,7 +365,6 @@ var Draughts = function (fen) {
       }
       moveString += move.move.to
       moveString += ' '
-      moveNumber += 1
     }
 
     if (moveString.length) {
@@ -561,7 +557,6 @@ var Draughts = function (fen) {
         return tempMove
       }
     }
-    console.log(moves, tempMove)
     return false
   }
 
@@ -588,15 +583,11 @@ var Draughts = function (fen) {
       position = setCharAt(position, convertNumber(move.to, 'internal'), move.piece.toUpperCase())
     }
     push(move)
-    if (turn === BLACK) {
-      moveNumber += 1
-    }
     turn = swap_color(turn)
   }
 
   function get (square) {
-    var piece = position.charAt(convertNumber(square, 'internal'))
-    return piece
+    return position.charAt(convertNumber(square, 'internal'))
   }
 
   function put (piece, square) {
@@ -616,32 +607,10 @@ var Draughts = function (fen) {
   }
 
   function remove (square) {
-    var piece = get(square)
     position = setCharAt(position, convertNumber(square, 'internal'), 0)
     update_setup(generate_fen())
 
-    return piece
-  }
-
-  function build_move (board, from, to, flags, promotion) {
-    var move = {
-      color: turn,
-      from: from,
-      to: to,
-      flags: flags,
-      piece: board[from].type
-    }
-
-    if (promotion) {
-      move.flags |= BITS.PROMOTION
-    }
-
-    if (board[to]) {
-      move.captured = board[to].type
-    } else if (flags & BITS.CAPTURE) {
-      move.captured = MAN
-    }
-    return move
+    return get(square)
   }
 
   function generate_moves (square) {
@@ -754,12 +723,11 @@ var Draughts = function (fen) {
   }
 
   function getCaptures () {
-    var us = turn
     var captures = []
     var i = position.length;
     while(i--)
     {
-      if (position[i] === us || position[i] === us.toLowerCase()) {
+      if (position[i] === turn || position[i] === turn.toLowerCase()) {
         var posFrom = i
         var state = {position: position, dirFrom: ''}
         var capture = {jumps: [], takes: [], from: posFrom, to: '', piecesTaken: []}
@@ -780,19 +748,18 @@ var Draughts = function (fen) {
     if (piece !== 'b' && piece !== 'w' && piece !== 'B' && piece !== 'W') {
       return [capture]
     }
-    var dirString
-    if (piece === 'b' || piece === 'w') {
-      dirString = directionStrings(state.position, posFrom, 3)
-    } else {
-      dirString = directionStrings(state.position, posFrom)
-    }
+    
+    var dirs = (piece === 'b' || piece === 'w')
+      ? directionStrings(state.position, posFrom, 3)
+      : directionStrings(state.position, posFrom);
+
     var finished = true
     var captureArrayForDir = []
-    for (var dir in dirString) {
+    for (var dir in dirs) {
       if (dir === state.dirFrom) {
         continue
       }
-      var str = dirString[dir]
+      var str = dirs[dir]
       switch (piece) {
         case 'b':
         case 'w':
@@ -869,8 +836,7 @@ var Draughts = function (fen) {
   function push (move) {
     history.push({
       move: move,
-      turn: turn,
-      moveNumber: moveNumber
+      turn: turn
     })
   }
 
@@ -883,26 +849,30 @@ var Draughts = function (fen) {
 
     var oldMove = old.move;
     turn = old.turn
-    moveNumber = old.moveNumber
 
-    position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece)
-    position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0)
-    if (oldMove.flags === 'c' || oldMove.flags === 'p') {
-      var i = oldMove.takes.length;
-      while(i--)
-      {
-        position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesCaptured[i])
-      }
+    switch(oldMove.flags)
+    {
+      case 'n': // Normal move
+        position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece);
+        position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0);
+        break;
+      case 'p': // Promotion
+        position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece.toLowerCase());
+        position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0);
+
+        var i = oldMove.takes.length;
+        while(i--) position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesCaptured[i])
+        break;
+      case 'c': // Capture
+        position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece);
+        position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0);
+        
+        var i = oldMove.takes.length;
+        while(i--)  position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesCaptured[i])
+        break;
     }
-    if (oldMove.flags === 'p') {
-      position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece.toLowerCase())
-    }
-    
+
     return oldMove
-  }
-
-  function get_disambiguator (move) {
-
   }
 
   function swap_color (c) {
@@ -1004,12 +974,8 @@ var Draughts = function (fen) {
 
   function outsideBoard (square) {
     // internal notation only
-    var n = parseInt(square, 10)
-    if (n >= 0 && n <= 55 && (n % 11) !== 0) {
-      return false
-    } else {
-      return true
-    }
+    var n = parseInt(square, 10);
+    return !(n >= 0 && n <= 55 && (n % 11) !== 0);
   }
 
   function directionStrings (tempPosition, square, maxLength) {
@@ -1122,7 +1088,6 @@ var Draughts = function (fen) {
     move.from = uglyMove.move.from
     move.to = uglyMove.move.to
     move.flags = uglyMove.move.flags
-    move.moveNumber = uglyMove.moveNumber
     move.piece = uglyMove.move.piece
     if (move.flags === 'c') {
       move.captures = uglyMove.move.captures.join(',')
@@ -1221,21 +1186,27 @@ var Draughts = function (fen) {
       return turn.toLowerCase()
     },
 
-    move: function move (move) {
+    move: function move (move, validateMove = true) {
       if (typeof move.to === 'undefined' && typeof move.from === 'undefined') {
         return false
       }
       move.to = parseInt(move.to, 10)
       move.from = parseInt(move.from, 10)
-      var moves = generate_moves()
 
-      var i = moves.length;
-      while(i--)
+      if(validateMove)
       {
-        if ((move.to === moves[i].to) && (move.from === moves[i].from)) {
-          makeMove(moves[i])
-          return moves[i]
+        var moves = generate_moves()
+        var i = moves.length;
+        while(i--)
+        {
+          if ((move.to === moves[i].to) && (move.from === moves[i].from)) {
+            makeMove(moves[i])
+            return moves[i]
+          }
         }
+      }else{
+        makeMove(move);
+        return move;
       }
 
       return false
