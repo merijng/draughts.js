@@ -996,9 +996,10 @@ var Draughts = function (fen) {
   }
 
   function validDir (piece, dir) {
-    var validDirs = {}
-    validDirs.w = {NE: true, SE: false, SW: false, NW: true}
-    validDirs.b = {NE: false, SE: true, SW: true, NW: false}
+    var validDirs = {
+      w: {NE: true, SE: false, SW: false, NW: true},
+      b: {NE: false, SE: true, SW: true, NW: false}
+    }
     return validDirs[piece.toLowerCase()][dir]
   }
 
