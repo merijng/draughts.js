@@ -542,7 +542,7 @@ var Draughts = function (fen) {
     } else {
       tempMove.flags = FLAGS.CAPTURE
     }
-    tempMove.piece = position.charAt(convertNumber(tempMove.from, 'internal'))
+    tempMove.piece = position.charAt(convertNrInternal(tempMove.from))
     var moves = getLegalMoves(tempMove.from);
     convertMoves(moves, 'external');
     // if move legal then make move
@@ -560,9 +560,9 @@ var Draughts = function (fen) {
   }
 
   function makeMove (move) {
-    move.piece = position.charAt(convertNumber(move.from, 'internal'))
-    position = setCharAt(position, convertNumber(move.to, 'internal'), move.piece)
-    position = setCharAt(position, convertNumber(move.from, 'internal'), 0)
+    move.piece = position.charAt(convertNrInternal(move.from))
+    position = setCharAt(position, convertNrInternal(move.to), move.piece)
+    position = setCharAt(position, convertNrInternal(move.from), 0)
     move.flags = FLAGS.NORMAL
 
     if (move.takes && move.takes.length) {
@@ -570,7 +570,7 @@ var Draughts = function (fen) {
 
       var i = move.takes.length;
       while(i--)
-        position = setCharAt(position, convertNumber(move.takes[i], 'internal'), 0)
+        position = setCharAt(position, convertNrInternal(move.takes[i]), 0)
     }
     
     // Promoting piece here
