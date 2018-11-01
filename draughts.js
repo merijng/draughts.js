@@ -543,8 +543,8 @@ var Draughts = function (fen) {
       tempMove.flags = FLAGS.CAPTURE
     }
     tempMove.piece = position.charAt(convertNumber(tempMove.from, 'internal'))
-    var moves = getLegalMoves(tempMove.from)
-    moves = convertMoves(moves, 'external')
+    var moves = getLegalMoves(tempMove.from);
+    convertMoves(moves, 'external');
     // if move legal then make move
     for (var i = 0; i < moves.length; i += 1) {
       if (tempMove.to === moves[i].to && tempMove.from === moves[i].from) {
@@ -552,7 +552,6 @@ var Draughts = function (fen) {
           tempMove.flags = FLAGS.CAPTURE
           tempMove.captures = moves[i].takes
           tempMove.takes = moves[i].takes
-          tempMove.piecesCaptured = moves[i].piecesTaken
         }
         return tempMove
       }
@@ -561,6 +560,7 @@ var Draughts = function (fen) {
   }
 
   function makeMove (move) {
+    if(typeof(move) === 'undefined') return;
     move.piece = position.charAt(convertNumber(move.from, 'internal'))
     position = setCharAt(position, convertNumber(move.to, 'internal'), move.piece)
     position = setCharAt(position, convertNumber(move.from, 'internal'), 0)
@@ -569,7 +569,6 @@ var Draughts = function (fen) {
     if (move.takes && move.takes.length) {
       move.flags = FLAGS.CAPTURE
       move.captures = move.takes
-      move.piecesCaptured = move.piecesTaken
 
       var i = move.takes.length;
       while(i--)
@@ -627,7 +626,6 @@ var Draughts = function (fen) {
         {
           tempCaptures[i].flags = FLAGS.CAPTURE
           tempCaptures[i].captures = tempCaptures[i].jumps
-          tempCaptures[i].piecesCaptured = tempCaptures[i].piecesTaken
         }
 
         return tempCaptures
@@ -654,7 +652,9 @@ var Draughts = function (fen) {
       }
     }
     // TODO called on hover ??
-    return convertMoves(legalMoves, 'external')
+    convertMoves(legalMoves, 'external');
+
+    return legalMoves;
   }
 
   function getMoves (index) {
@@ -664,7 +664,8 @@ var Draughts = function (fen) {
       if (position[i] === turn || position[i] === turn.toLowerCase()) {
         var tempMoves = movesAtSquare(i)
         if (tempMoves.length) {
-          moves = moves.concat(convertMoves(tempMoves, 'external'))
+          convertMoves(tempMoves, 'external');
+          moves = moves.concat(tempMoves)
         }
       }
     }
@@ -695,8 +696,7 @@ var Draughts = function (fen) {
           var matchArray = str.match(/^[bw]0/) // e.g. b0 w0
           if (matchArray !== null && validDir(piece, dir) === true) {
             var posTo = posFrom + STEPS[dir]
-            var moveObject = {from: posFrom, to: posTo, takes: [], jumps: []}
-            moves.push(moveObject)
+            moves.push({from: posFrom, to: posTo, takes: [], jumps: []})
           }
         }
         break
@@ -707,11 +707,10 @@ var Draughts = function (fen) {
           str = dirStrings[dir]
 
           matchArray = str.match(/^[BW]0+/) // e.g. B000, W0
-          if (matchArray !== null) {
+          if (matchArray !== null && validDir(piece, dir) === true) {
             for (var i = 0; i < matchArray[0].length; i++) {
               posTo = posFrom + (i * STEPS[dir])
-              moveObject = {from: posFrom, to: posTo, takes: [], jumps: []}
-              moves.push(moveObject)
+              moves.push({from: posFrom, to: posTo, takes: [], jumps: []})
             }
           }
         }
@@ -734,7 +733,8 @@ var Draughts = function (fen) {
         capture.jumps[0] = posFrom
         var tempCaptures = capturesAtSquare(posFrom, state, capture)
         if (tempCaptures.length) {
-          captures = captures.concat(convertMoves(tempCaptures, 'external'))
+          convertMoves(tempCaptures, 'external');
+          captures = captures.concat(tempCaptures);
         }
       }
     }
@@ -861,14 +861,14 @@ var Draughts = function (fen) {
         position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0);
 
         var i = oldMove.takes.length;
-        while(i--) position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesCaptured[i])
+        while(i--) position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesTaken[i])
         break;
       case 'c': // Capture
         position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece);
         position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0);
         
         var i = oldMove.takes.length;
-        while(i--)  position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesCaptured[i])
+        while(i--)  position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesTaken[i])
         break;
     }
 
@@ -908,27 +908,20 @@ var Draughts = function (fen) {
   }
 
   function convertMoves (moves, type) {
-    if (!type || moves.length === 0)
-      return []
-
-    var tempMoves = []
+    if (!type || moves.length === 0) {
+      return tempMoves
+    }
 
     for (var i = 0; i < moves.length; i++) {
-      var moveObject = {jumps: [], takes: []}
-      moveObject.from = convertNumber(moves[i].from, type)
       var j = moves[i].jumps.length;
-      while(j--)
-        moveObject.jumps[j] = convertNumber(moves[i].jumps[j], type)
-
+      while(j--) moves[i].jumps[j] = convertNumber(moves[i].jumps[j], type)
+      
       j = moves[i].takes.length;
-      while(j--)
-        moveObject.takes[j] = convertNumber(moves[i].takes[j], type)
-
-      moveObject.to = convertNumber(moves[i].to, type)
-      moveObject.piecesTaken = moves[i].piecesTaken
-      tempMoves.push(moveObject)
+      while(j--) moves[i].takes[j] = convertNumber(moves[i].takes[j], type)
+      
+      moves[i].from = convertNumber(moves[i].from, type)
+      moves[i].to = convertNumber(moves[i].to, type)
     }
-    return tempMoves
   }
 
   function convertNumber (number, notation) {
@@ -966,8 +959,7 @@ var Draughts = function (fen) {
         sub5 = position.substr(45, 10)
         newPosition = '?' + sub1 + sub2 + sub3 + sub4 + sub5
         break
-      default:
-        newPosition = position
+      default: newPosition = position
     }
     return newPosition
   }
@@ -1019,7 +1011,7 @@ var Draughts = function (fen) {
     var validDirs = {}
     validDirs.w = {NE: true, SE: false, SW: false, NW: true}
     validDirs.b = {NE: false, SE: true, SW: true, NW: false}
-    return validDirs[piece][dir]
+    return validDirs[piece.toLowerCase()][dir]
   }
 
   function ascii (unicode) {
@@ -1187,27 +1179,26 @@ var Draughts = function (fen) {
     },
 
     move: function move (move, validateMove = true) {
-      if(validateMove)
-      {
-        if (typeof move.to === 'undefined' && typeof move.from === 'undefined') {
-          return false
-        }
-
-        move.to = parseInt(move.to, 10)
-        move.from = parseInt(move.from, 10)
-
-        var moves = generate_moves()
-        var i = moves.length;
-        while(i--)
-        {
-          if ((move.to === moves[i].to) && (move.from === moves[i].from)) {
-            makeMove(moves[i])
-            return moves[i]
-          }
-        }
-      }else{
+      if(!validateMove){
         makeMove(move);
         return move;
+      }
+
+      if (typeof move.to === 'undefined' && typeof move.from === 'undefined') {
+        return false
+      }
+
+      move.to = parseInt(move.to, 10)
+      move.from = parseInt(move.from, 10)
+
+      var moves = generate_moves()
+      var i = moves.length;
+      while(i--)
+      {
+        if ((move.to === moves[i].to) && (move.from === moves[i].from)) {
+          makeMove(moves[i])
+          return moves[i]
+        }
       }
 
       return false
@@ -1218,8 +1209,7 @@ var Draughts = function (fen) {
     getLegalMoves: getLegalMoves,
 
     undo: function () {
-      var move = undoMove()
-      return move || null
+      return undoMove()
     },
 
     clear: function () {
