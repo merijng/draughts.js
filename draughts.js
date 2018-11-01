@@ -964,21 +964,16 @@ var Draughts = function (fen) {
     return !(n >= 0 && n <= 55 && (n % 11) !== 0);
   }
 
-  function directionStrings (tempPosition, square, maxLength) {
-    // Create direction strings for square at position (internal representation)
-    // Output object with four directions as properties (four rhumbs).
-    // Each property has a string as value representing the pieces in that direction.
-    // Piece of the given square is part of each string.
-    // Example of output: {NE: 'b0', SE: 'b00wb00', SW: 'bbb00', NW: 'bb'}
-    // Strings have maximum length of given maxLength.
-    if (arguments.length === 2) {
-      maxLength = 100
-    }
-    var dirStrings = {}
-    if (outsideBoard(square) === true) {
-      return 334
-    }
+  /*
+    Create direction strings for square at position (internal representation)
+    Output object with four directions as properties (four rhumbs).
+    Each property has a string as value representing the pieces in that direction.
+    Piece of the given square is part of each string.
+    Example of output: {NE: 'b0', SE: 'b00wb00', SW: 'bbb00', NW: 'bb'}
+  */
+  function directionStrings (tempPosition, square, maxLength = 100) {
 
+    var dirStrings = {}
     for (var dir in STEPS) {
       var dirArray = []
       var i = 0
@@ -987,8 +982,7 @@ var Draughts = function (fen) {
         dirArray[i] = tempPosition.charAt(index)
         i++
         index = square + i * STEPS[dir]
-        var outside = outsideBoard(index)
-      } while (outside === false && i < maxLength)
+      } while (outsideBoard(index) === false && i < maxLength)
 
       dirStrings[dir] = dirArray.join('')
     }
