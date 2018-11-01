@@ -1203,10 +1203,6 @@ var Draughts = function (fen) {
       return remove(square)
     },
 
-    perft: function (depth) {
-      return perft(depth)
-    },
-
     history: getHistory,
 
     convertMoves: convertMoves,
