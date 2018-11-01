@@ -927,7 +927,6 @@ var Draughts = function (fen) {
   }
 
   function convertNumber (number, notation) {
-    var result
     switch (notation) {
       case 'internal': return convertNrInternal(number)
       case 'external': return convertNrExternal (number)
