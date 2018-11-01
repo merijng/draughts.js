@@ -559,6 +559,7 @@ var Draughts = function (fen) {
     return false
   }
 
+  // TODO: Is it the effort to create a flow without converts for 'AI performance' perposes?
   function makeMove (move) {
     move.piece = position.charAt(convertNrInternal(move.from))
     position = setCharAt(position, convertNrInternal(move.to), move.piece)
@@ -569,8 +570,7 @@ var Draughts = function (fen) {
       move.flags = FLAGS.CAPTURE
 
       var i = move.takes.length;
-      while(i--)
-        position = setCharAt(position, convertNrInternal(move.takes[i]), 0)
+      while(i--) position = setCharAt(position, convertNrInternal(move.takes[i]), 0)
     }
     
     // Promoting piece here
@@ -657,7 +657,7 @@ var Draughts = function (fen) {
     return legalMoves;
   }
 
-  function getMoves (index) {
+  function getMoves () {
     var moves = []
 
     for (var i = 1; i < position.length; i++) {
@@ -1107,25 +1107,6 @@ var Draughts = function (fen) {
 
   function trim (str) {
     return str.replace(/^\s+|\s+$/g, '')
-  }
-
-  // TODO: Finish function
-  function perft (depth) {
-    var moves = generate_moves({legal: false})
-    var nodes = 0
-
-    for (var i = 0; i < moves.length; i++) {
-      makeMove(moves[i])
-      if (depth - 1 > 0) {
-        var child_nodes = perft(depth - 1)
-        nodes += child_nodes
-      } else {
-        nodes++
-      }
-      undoMove()
-    }
-
-    return nodes
   }
 
   return {
