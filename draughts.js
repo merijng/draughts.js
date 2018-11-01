@@ -560,33 +560,33 @@ var Draughts = function (fen) {
   }
 
   function makeMove (move) {
-    if(typeof(move) === 'undefined') return;
     move.piece = position.charAt(convertNumber(move.from, 'internal'))
     position = setCharAt(position, convertNumber(move.to, 'internal'), move.piece)
     position = setCharAt(position, convertNumber(move.from, 'internal'), 0)
     move.flags = FLAGS.NORMAL
-    // TODO refactor to either takes or capture
+
     if (move.takes && move.takes.length) {
       move.flags = FLAGS.CAPTURE
-      move.captures = move.takes
 
       var i = move.takes.length;
       while(i--)
         position = setCharAt(position, convertNumber(move.takes[i], 'internal'), 0)
     }
+    
     // Promoting piece here
     if (move.to <= 5 && move.piece === 'w') {
       move.flags = FLAGS.PROMOTION
-      position = setCharAt(position, convertNumber(move.to, 'internal'), move.piece.toUpperCase())
+      position = setCharAt(position, convertNrInternal(move.to), move.piece.toUpperCase())
     } else if (move.to >= 46 && move.piece === 'b') {
-      position = setCharAt(position, convertNumber(move.to, 'internal'), move.piece.toUpperCase())
+      position = setCharAt(position, convertNrInternal(move.to), move.piece.toUpperCase())
     }
+
     push(move)
-    turn = swap_color(turn)
+    turn = swapColor(turn)
   }
 
   function get (square) {
-    return position.charAt(convertNumber(square, 'internal'))
+    return position.charAt(convertNrInternal(square))
   }
 
   function put (piece, square) {
@@ -596,17 +596,17 @@ var Draughts = function (fen) {
     }
 
     // check for valid square
-    if (outsideBoard(convertNumber(square, 'internal')) === true) {
+    if (outsideBoard(convertNrInternal(square)) === true) {
       return false
     }
-    position = setCharAt(position, convertNumber(square, 'internal'), piece)
+    position = setCharAt(position, convertNrInternal(square), piece)
     update_setup(generate_fen())
 
     return true
   }
 
   function remove (square) {
-    position = setCharAt(position, convertNumber(square, 'internal'), 0)
+    position = setCharAt(position, convertNrInternal(square), 0)
     update_setup(generate_fen())
 
     return get(square)
@@ -639,9 +639,9 @@ var Draughts = function (fen) {
 
   function getLegalMoves (index) {
     var legalMoves
-    index = parseInt(index, 10)
+    index = parseInt(index, 10);
     if (!Number.isNaN(index)) {
-      index = convertNumber(index, 'internal')
+      index = convertNrInternal(index)
 
       var captures = capturesAtSquare(index, {position: position, dirFrom: ''}, {jumps: [index], takes: [], piecesTaken: []})
 
@@ -674,11 +674,11 @@ var Draughts = function (fen) {
 
   function setCharAt (position, idx, chr) {
     idx = parseInt(idx, 10)
-    if (idx > position.length - 1) {
+
+    if (idx > position.length - 1)
       return position.toString()
-    } else {
-      return position.substr(0, idx) + chr + position.substr(idx + 1)
-    }
+
+    return position.substr(0, idx) + chr + position.substr(idx + 1)
   }
 
   function movesAtSquare (square) {
@@ -691,9 +691,7 @@ var Draughts = function (fen) {
       case 'w':
         var dirStrings = directionStrings(position, posFrom, 2)
         for (var dir in dirStrings) {
-          var str = dirStrings[dir]
-
-          var matchArray = str.match(/^[bw]0/) // e.g. b0 w0
+          var matchArray = dirStrings[dir].match(/^[bw]0/) // e.g. b0 w0
           if (matchArray !== null && validDir(piece, dir) === true) {
             var posTo = posFrom + STEPS[dir]
             moves.push({from: posFrom, to: posTo, takes: [], jumps: []})
@@ -702,11 +700,9 @@ var Draughts = function (fen) {
         break
       case 'W':
       case 'B':
-        dirStrings = directionStrings(position, posFrom, 2)
+        var dirStrings = directionStrings(position, posFrom, 2)
         for (dir in dirStrings) {
-          str = dirStrings[dir]
-
-          matchArray = str.match(/^[BW]0+/) // e.g. B000, W0
+          matchArray = dirStrings[dir].match(/^[BW]0+/) // e.g. B000, W0
           if (matchArray !== null && validDir(piece, dir) === true) {
             for (var i = 0; i < matchArray[0].length; i++) {
               posTo = posFrom + (i * STEPS[dir])
@@ -715,8 +711,6 @@ var Draughts = function (fen) {
           }
         }
         break
-      default:
-        return moves
     }
     return moves
   }
@@ -843,9 +837,7 @@ var Draughts = function (fen) {
   function undoMove () {
 
     var old = history.pop()
-    if (!old) {
-      return null
-    }
+    if (!old) return null;
 
     var oldMove = old.move;
     turn = old.turn
@@ -853,29 +845,29 @@ var Draughts = function (fen) {
     switch(oldMove.flags)
     {
       case 'n': // Normal move
-        position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece);
-        position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0);
+        position = setCharAt(position, convertNrInternal(oldMove.from), oldMove.piece);
+        position = setCharAt(position, convertNrInternal(oldMove.to), 0);
         break;
       case 'p': // Promotion
-        position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece.toLowerCase());
-        position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0);
+        position = setCharAt(position, convertNrInternal(oldMove.from), oldMove.piece.toLowerCase());
+        position = setCharAt(position, convertNrInternal(oldMove.to), 0);
 
         var i = oldMove.takes.length;
-        while(i--) position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesTaken[i])
+        while(i--) position = setCharAt(position, convertNrInternal(oldMove.takes[i]), oldMove.piecesTaken[i])
         break;
       case 'c': // Capture
-        position = setCharAt(position, convertNumber(oldMove.from, 'internal'), oldMove.piece);
-        position = setCharAt(position, convertNumber(oldMove.to, 'internal'), 0);
+        position = setCharAt(position, convertNrInternal(oldMove.from), oldMove.piece);
+        position = setCharAt(position, convertNrInternal(oldMove.to), 0);
         
         var i = oldMove.takes.length;
-        while(i--)  position = setCharAt(position, convertNumber(oldMove.takes[i], 'internal'), oldMove.piecesTaken[i])
+        while(i--)  position = setCharAt(position, convertNrInternal(oldMove.takes[i]), oldMove.piecesTaken[i])
         break;
     }
 
     return oldMove
   }
 
-  function swap_color (c) {
+  function swapColor (c) {
     return c === WHITE ? BLACK : WHITE
   }
 
@@ -924,20 +916,23 @@ var Draughts = function (fen) {
     }
   }
 
+  function convertNrInternal (number) {
+    var num = parseInt(number, 10);
+    return num + ~~((num - 1) / 10);
+  }
+
+  function convertNrExternal (number) {
+    var num = parseInt(number, 10);
+    return num - ~~((num - 1) / 11);
+  }
+
   function convertNumber (number, notation) {
-    var num = parseInt(number, 10)
     var result
     switch (notation) {
-      case 'internal':
-        result = num + ~~((num - 1) / 10)
-        break
-      case 'external':
-        result = num - ~~((num - 1) / 11)
-        break
-      default:
-        result = num
+      case 'internal': return convertNrInternal(number)
+      case 'external': return convertNrExternal (number)
+      default: return parseInt(number, 10);
     }
-    return result
   }
 
   function convertPosition (position, notation) {
