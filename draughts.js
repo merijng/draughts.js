@@ -630,6 +630,7 @@ var Draughts = function (fen) {
 
         return tempCaptures
       }
+
       moves = getMoves()
     }
     // TODO returns [] for on hovering for square no
@@ -645,7 +646,7 @@ var Draughts = function (fen) {
 
       var captures = capturesAtSquare(index, {position: position, dirFrom: ''}, {jumps: [index], takes: [], piecesTaken: []})
 
-      captures = longestCapture(captures)
+      captures = filterCaptures(captures)
       legalMoves = captures
       if (captures.length === 0) {
         legalMoves = movesAtSquare(index)
@@ -675,7 +676,7 @@ var Draughts = function (fen) {
   function setCharAt (position, idx, chr) {
     idx = parseInt(idx, 10)
 
-    if (idx > position.length - 1)
+    if (idx >= position.length)
       return position.toString()
 
     return position.substr(0, idx) + chr + position.substr(idx + 1)
@@ -733,7 +734,7 @@ var Draughts = function (fen) {
       }
     }
 
-    captures = longestCapture(captures)
+    captures = filterCaptures(captures)
     return captures
   }
 
@@ -793,15 +794,16 @@ var Draughts = function (fen) {
             }
             for (var i = 1; i < matchSubstr.length; i++) {
               posTo = posFrom + ((takeIndex + i) * STEPS[dir])
-              updateCapture = clone(capture)
-              updateCapture.jumps.push(posTo)
+              var updateCapture = clone(capture)
               updateCapture.to = posTo
+              updateCapture.jumps.push(posTo)
               updateCapture.takes.push(posTake)
               updateCapture.piecesTaken.push(position.charAt(posTake))
-              updateCapture.posFrom = posFrom
-              updateState = clone(state)
+              updateCapture.from = posFrom
+              updateCapture.posFrom = posFrom // TODO: Ok we dont need this one?
+              var updateState = clone(state)
               updateState.dirFrom = oppositeDir(dir)
-              pieceCode = updateState.position.charAt(posFrom)
+              var pieceCode = updateState.position.charAt(posFrom)
               updateState.position = setCharAt(updateState.position, posFrom, 0)
               updateState.position = setCharAt(updateState.position, posTo, pieceCode)
               finished = false
@@ -876,23 +878,26 @@ var Draughts = function (fen) {
     return regex.test(int);
   }
 
-  function longestCapture (captures) {
-    var maxJumpCount = 0
+  function filterCaptures (captures) {
+    var captureFound = false;
     var i = captures.length;
     while(i--)
     {
-      if (captures[i].jumps.length > maxJumpCount)
-        maxJumpCount = captures[i].jumps.length
+      if (captures[i].jumps.length > 0)
+      {
+        captureFound = true;
+        break;
+      }
     }
 
-    if (maxJumpCount < 2)
+    if (!captureFound)
       return [];
 
     var selectedCaptures = [];
     i = captures.length;
     while(i--)
     {
-      if (captures[i].jumps.length === maxJumpCount)
+      if (captures[i].jumps.length > 0)
         selectedCaptures.push(captures[i])
     }
 
