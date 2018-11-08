@@ -567,8 +567,7 @@ var Draughts = function (fen) {
     move.flags = FLAGS.NORMAL
 
     if (move.takes && move.takes.length) {
-      move.flags = FLAGS.CAPTURE
-
+      move.flags = FLAGS.CAPTURE;
       var i = move.takes.length;
       while(i--) position = setCharAt(position, convertNrInternal(move.takes[i]), 0)
     }
@@ -619,7 +618,6 @@ var Draughts = function (fen) {
       moves = getLegalMoves(square.square)
     } else {
       var tempCaptures = getCaptures()
-      // TODO change to be applicable to array
       if (tempCaptures.length) {
         var i = tempCaptures.length;
         while(i--)
@@ -630,11 +628,10 @@ var Draughts = function (fen) {
 
         return tempCaptures
       }
-
       moves = getMoves()
     }
     // TODO returns [] for on hovering for square no
-    moves = [].concat.apply([], moves)
+    moves = [].concat.apply([], moves);
     return moves
   }
 
@@ -660,10 +657,9 @@ var Draughts = function (fen) {
 
   function getMoves () {
     var moves = []
-
     for (var i = 1; i < position.length; i++) {
       if (position[i] === turn || position[i] === turn.toLowerCase()) {
-        var tempMoves = movesAtSquare(i)
+        var tempMoves = movesAtSquare(i);
         if (tempMoves.length) {
           convertMoves(tempMoves, 'external');
           moves = moves.concat(tempMoves)
@@ -694,8 +690,11 @@ var Draughts = function (fen) {
         for (var dir in dirStrings) {
           var matchArray = dirStrings[dir].match(/^[bw]0/) // e.g. b0 w0
           if (matchArray !== null && validDir(piece, dir) === true) {
-            var posTo = posFrom + STEPS[dir]
-            moves.push({from: posFrom, to: posTo, takes: [], jumps: []})
+            var posTo = posFrom + STEPS[dir];
+            if(posTo != posFrom)
+              moves.push({from: posFrom, to: posTo, takes: [], jumps: []})
+            if ((posTo <= 5 && piece === 'w') || posTo >= 46 && piece === 'b')
+              moves[moves.length-1].flags = 'p';
           }
         }
         break
@@ -704,10 +703,11 @@ var Draughts = function (fen) {
         var dirStrings = directionStrings(position, posFrom, 2)
         for (dir in dirStrings) {
           matchArray = dirStrings[dir].match(/^[BW]0+/) // e.g. B000, W0
-          if (matchArray !== null && validDir(piece, dir) === true) {
+          if (matchArray !== null) {
             for (var i = 0; i < matchArray[0].length; i++) {
-              posTo = posFrom + (i * STEPS[dir])
-              moves.push({from: posFrom, to: posTo, takes: [], jumps: []})
+              var posTo = posFrom + (i * STEPS[dir])
+              if(posTo != posFrom)
+                moves.push({from: posFrom, to: posTo, takes: [], jumps: []})
             }
           }
         }
@@ -760,7 +760,7 @@ var Draughts = function (fen) {
         case 'w':
           var matchArray = str.match(/^b[wW]0|^w[bB]0/) // matches: bw0, bW0, wB0, wb0
           if (matchArray !== null) {
-            var posTo = posFrom + (2 * STEPS[dir])
+            var posTo = posFrom + (2 * STEPS[dir]);
             var posTake = posFrom + (1 * STEPS[dir])
             if (capture.takes.indexOf(posTake) > -1) {
               continue // capturing twice forbidden
@@ -793,14 +793,13 @@ var Draughts = function (fen) {
               continue
             }
             for (var i = 1; i < matchSubstr.length; i++) {
-              posTo = posFrom + ((takeIndex + i) * STEPS[dir])
+              posTo = posFrom + ((takeIndex + i) * STEPS[dir]);
               var updateCapture = clone(capture)
               updateCapture.to = posTo
               updateCapture.jumps.push(posTo)
               updateCapture.takes.push(posTake)
               updateCapture.piecesTaken.push(position.charAt(posTake))
               updateCapture.from = posFrom
-              updateCapture.posFrom = posFrom // TODO: Ok we dont need this one?
               var updateState = clone(state)
               updateState.dirFrom = oppositeDir(dir)
               var pieceCode = updateState.position.charAt(posFrom)
@@ -819,7 +818,7 @@ var Draughts = function (fen) {
     var captureArray = []
     if (finished === true && capture.takes.length) {
       // fix for mutiple capture
-      capture.from = capture.jumps[0]
+      capture.from = capture.jumps[0];
       captureArray[0] = capture
     } else {
       for (dir in captureArrayForDir) {
@@ -847,20 +846,27 @@ var Draughts = function (fen) {
     switch(oldMove.flags)
     {
       case 'n': // Normal move
-        position = setCharAt(position, convertNrInternal(oldMove.from), oldMove.piece);
-        position = setCharAt(position, convertNrInternal(oldMove.to), 0);
+        if(oldMove.from != oldMove.to) {
+          position = setCharAt(position, convertNrInternal(oldMove.from), oldMove.piece);
+          if(oldMove.from != oldMove.to)
+            position = setCharAt(position, convertNrInternal(oldMove.to), 0);
+        }
         break;
       case 'p': // Promotion
-        position = setCharAt(position, convertNrInternal(oldMove.from), oldMove.piece.toLowerCase());
-        position = setCharAt(position, convertNrInternal(oldMove.to), 0);
+        if(oldMove.from != oldMove.to) {
+          position = setCharAt(position, convertNrInternal(oldMove.from), oldMove.piece.toLowerCase());
+          if(oldMove.from != oldMove.to)
+            position = setCharAt(position, convertNrInternal(oldMove.to), 0);
+        }
 
         var i = oldMove.takes.length;
         while(i--) position = setCharAt(position, convertNrInternal(oldMove.takes[i]), oldMove.piecesTaken[i])
         break;
       case 'c': // Capture
         position = setCharAt(position, convertNrInternal(oldMove.from), oldMove.piece);
-        position = setCharAt(position, convertNrInternal(oldMove.to), 0);
-        
+        if(oldMove.from != oldMove.to)
+          position = setCharAt(position, convertNrInternal(oldMove.to), 0);
+
         var i = oldMove.takes.length;
         while(i--)  position = setCharAt(position, convertNrInternal(oldMove.takes[i]), oldMove.piecesTaken[i])
         break;
@@ -879,25 +885,22 @@ var Draughts = function (fen) {
   }
 
   function filterCaptures (captures) {
-    var captureFound = false;
+    var maxJumpCount = 0
     var i = captures.length;
     while(i--)
     {
-      if (captures[i].jumps.length > 0)
-      {
-        captureFound = true;
-        break;
-      }
+      if (captures[i].jumps.length > maxJumpCount)
+        maxJumpCount = captures[i].jumps.length
     }
 
-    if (!captureFound)
+    if (maxJumpCount < 2)
       return [];
 
     var selectedCaptures = [];
     i = captures.length;
     while(i--)
     {
-      if (captures[i].jumps.length > 0)
+      if (captures[i].jumps.length === maxJumpCount)
         selectedCaptures.push(captures[i])
     }
 
@@ -915,7 +918,7 @@ var Draughts = function (fen) {
       
       j = moves[i].takes.length;
       while(j--) moves[i].takes[j] = convertNumber(moves[i].takes[j], type)
-      
+
       moves[i].from = convertNumber(moves[i].from, type)
       moves[i].to = convertNumber(moves[i].to, type)
     }
@@ -977,7 +980,6 @@ var Draughts = function (fen) {
     Example of output: {NE: 'b0', SE: 'b00wb00', SW: 'bbb00', NW: 'bb'}
   */
   function directionStrings (tempPosition, square, maxLength = 100) {
-
     var dirStrings = {}
     for (var dir in STEPS) {
       var dirArray = []
@@ -1005,7 +1007,7 @@ var Draughts = function (fen) {
       w: {NE: true, SE: false, SW: false, NW: true},
       b: {NE: false, SE: true, SW: true, NW: false}
     }
-    return validDirs[piece.toLowerCase()][dir]
+    return validDirs[piece][dir]
   }
 
   function ascii (unicode) {
