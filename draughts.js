@@ -848,8 +848,7 @@ var Draughts = function (fen) {
       case 'n': // Normal move
         if(oldMove.from != oldMove.to) {
           position = setCharAt(position, convertNrInternal(oldMove.from), oldMove.piece);
-          if(oldMove.from != oldMove.to)
-            position = setCharAt(position, convertNrInternal(oldMove.to), 0);
+          position = setCharAt(position, convertNrInternal(oldMove.to), 0);
         }
         break;
       case 'p': // Promotion
