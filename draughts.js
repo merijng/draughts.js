@@ -884,22 +884,12 @@ var Draughts = function (fen) {
   }
 
   function filterCaptures (captures) {
-    var maxJumpCount = 0
-    var i = captures.length;
-    while(i--)
-    {
-      if (captures[i].jumps.length > maxJumpCount)
-        maxJumpCount = captures[i].jumps.length
-    }
-
-    if (maxJumpCount < 2)
-      return [];
-
     var selectedCaptures = [];
-    i = captures.length;
+    var i = captures.length;
+
     while(i--)
     {
-      if (captures[i].jumps.length === maxJumpCount)
+      if (captures[i].jumps.length > 0)
         selectedCaptures.push(captures[i])
     }
 
