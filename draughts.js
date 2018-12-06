@@ -271,8 +271,9 @@ var Draughts = function (fen) {
       if (sideString.length === 0) {
         continue
       }
-      var numbers = sideString.split(',')
-      for (var i = 0; i < numbers.length; i++) {
+      var numbers = sideString.split(',');
+      var numbersLength = numbers.length;
+      for (var i = 0; i < numbersLength; i++) {
         var numSquare = numbers[i]
         var isKing = (numSquare.substr(0, 1) === 'K')
         numSquare = (isKing === true ? numSquare.substr(1) : numSquare)
@@ -307,8 +308,9 @@ var Draughts = function (fen) {
   function generate_fen () {
     var black = []
     var white = []
-    var externalPosition = convertPosition(position, 'external')
-    for (var i = 0; i < externalPosition.length; i++) {
+    var externalPosition = convertPosition(position, 'external');
+    var externalPositionLength = externalPosition.length;
+    for (var i = 0; i < externalPositionLength; i++) {
       switch (externalPosition[i]) {
         case 'w':
           white.push(i)
@@ -380,8 +382,9 @@ var Draughts = function (fen) {
       return result.join('') + moves.join(' ')
     }
 
-    var currentWidth = 0
-    for (i = 0; i < moves.length; i++) {
+    var currentWidth = 0;
+    var movesLength = moves.length;
+    for (i = 0; i < movesLength; i++) {
       if (currentWidth + moves[i].length > maxWidth && i !== 0) {
         if (result[result.length - 1] === ' ') {
           result.pop()
@@ -504,7 +507,8 @@ var Draughts = function (fen) {
     /* delete empty entries */
     moves = moves.join(',').replace(/,,+/g, ',').split(',')
 
-    var move = ''
+    var move = '';
+    
     for (var half_move = 0; half_move < moves.length - 1; half_move += 1) {
       move = getMoveObject(moves[half_move])
       if (!move) {
@@ -546,7 +550,8 @@ var Draughts = function (fen) {
     var moves = getLegalMoves(tempMove.from);
     convertMoves(moves, 'external');
     // if move legal then make move
-    for (var i = 0; i < moves.length; i += 1) {
+    let movesLength = moves.length;
+    for (var i = 0; i < movesLength; i += 1) {
       if (tempMove.to === moves[i].to && tempMove.from === moves[i].from) {
         if (moves[i].takes.length > 0) {
           tempMove.flags = FLAGS.CAPTURE
@@ -657,7 +662,8 @@ var Draughts = function (fen) {
 
   function getMoves () {
     var moves = []
-    for (var i = 1; i < position.length; i++) {
+    var positionLength = position.length;
+    for (var i = 1; i < positionLength; i++) {
       if (position[i] === turn || position[i] === turn.toLowerCase()) {
         var tempMoves = movesAtSquare(i);
         if (tempMoves.length) {
@@ -682,7 +688,6 @@ var Draughts = function (fen) {
     var moves = []
     var posFrom = square
     var piece = position.charAt(posFrom)
-
     switch (piece) {
       case 'b':
       case 'w':
@@ -704,7 +709,8 @@ var Draughts = function (fen) {
         for (dir in dirStrings) {
           matchArray = dirStrings[dir].match(/^[BW]0+/) // e.g. B000, W0
           if (matchArray !== null) {
-            for (var i = 0; i < matchArray[0].length; i++) {
+            var mathArrayLength = matchArray[0].length;
+            for (var i = 0; i < mathArrayLength; i++) {
               var posTo = posFrom + (i * STEPS[dir])
               if(posTo != posFrom)
                 moves.push({from: posFrom, to: posTo, takes: [], jumps: []})
@@ -792,7 +798,8 @@ var Draughts = function (fen) {
             if (capture.takes.indexOf(posTake) > -1) {
               continue
             }
-            for (var i = 1; i < matchSubstr.length; i++) {
+            var subStrLength = matchSubstr.length;
+            for (var i = 1; i < subStrLength; i++) {
               posTo = posFrom + ((takeIndex + i) * STEPS[dir]);
               var updateCapture = clone(capture)
               updateCapture.to = posTo
@@ -884,16 +891,16 @@ var Draughts = function (fen) {
   }
 
   function filterCaptures (captures) {
-    var selectedCaptures = [];
+    var captures = [];
     var i = captures.length;
-
+    
     while(i--)
     {
       if (captures[i].jumps.length > 0)
-        selectedCaptures.push(captures[i])
+        captures.push(captures[i])
     }
 
-    return selectedCaptures
+    return captures
   }
 
   function convertMoves (moves, type) {
@@ -901,7 +908,8 @@ var Draughts = function (fen) {
       return tempMoves
     }
 
-    for (var i = 0; i < moves.length; i++) {
+    let movesLength = moves.length;
+    for (var i = 0; i < movesLength; i++) {
       var j = moves[i].jumps.length;
       while(j--) moves[i].jumps[j] = convertNumber(moves[i].jumps[j], type)
       
@@ -1031,7 +1039,8 @@ var Draughts = function (fen) {
 
   function gameOver () {
     // First check if any piece left
-    for (var i = 0; i < position.length; i++) {
+    var positionLength = position.length;
+    for (var i = 0; i < positionLength; i++) {
       if (position[i].toLowerCase() === turn.toLowerCase()) {
         // if moves left game not over
         return generate_moves().length === 0
